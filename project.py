@@ -2,6 +2,31 @@
 import numpy as np
 import random
 
+up_busy_server_remaining_times = []
+up_queue_service_times = []
+
+down_busy_server_remaining_times = []
+down_queue_service_times = []
+
+up_space_onPlatform = 20  # Capacity of the platform
+down_space_onPlatform = 20
+
+# Capacity of the platform
+up_max_num_inQueue = 12 # Maximum number of customers in the queue
+down_max_num_inQueue = 12
+
+up_queue_length=0
+down_queue_length=0
+
+
+up_busy_servers=0
+down_busy_servers=0
+
+up_busy_server_remaining_times = []
+up_queue_service_times = []
+
+
+
 num = 15  # Number of customers
 
 # Tables storing data describing simulation results
@@ -28,7 +53,8 @@ interarrival_mean = 30
 interarrival_sd = 4
 
 
-def visit_MMc():  # When a customer visits an In-Gate or Out-Gate
+
+def visit_MMc( ):  # When a customer visits an In-Gate or Out-Gate
     # No queue, and Service Time does not increase?
     return 0
 
@@ -45,8 +71,7 @@ def visit_MGcc(general_mean, general_sd):  # ??????How to implement this General
     return serv_time
 
 
-def Arrival_Process(
-        i):  # Arrival time is decided, then a sequence of transport nodes adds serviec time. Output time at which customer departs this process
+def Arrival_Process(i):  # Arrival time is decided, then a sequence of transport nodes adds serviec time. Output time at which customer departs this process
     # Arrival
     if (i == 0):
         Arrival_Time[i] = 0
@@ -96,14 +121,68 @@ def Departure_Process(i):  # Calls one of the three visits to expound time servi
 
 
 def Platform_Process(i):  # The tricky part, integrate Arrival_Proces output & Offboarding output with Departure input
-    Arrival_Time = Platform_Arrival_Time[i]
+    for i in range(0, num):
+        Platform_Arrival_Time[i] = Arrival_Process(i)
 
-    print()
+        # Call departure process to
+        Platform_Departure_Time[i] = Departure_Process(i)
 
-    # Outputs Depart_arriv = Platform_arriv + plat_serv_time()
+        if random.random() < 0.5:  # uptrain
+            up_train(i)
+        else:  # downtrain
+            down_train(i)
+
+def up_train(i, up_busy_server_remaining_times, up_queue_service_times, up_busy_servers, up_queue_length):
+
+    if up_busy_servers<up_space_onPlatform:
+        up_busy_servers+=1
+        Wait_Time[i]=0
+        Platform_Departure_Time[i] = Platform_Arrival_Time[i] + Service_Time[i]
+
+        up_busy_server_remaining_times.append(Service_Time[i])
+
+    elif up_queue_length<up_max_num_inQueue:
+        up_queue_length+=1
+        Wait_Time[i]= sum(up_busy_server_remaining_times) + sum(up_queue_service_times)
+
+        up_queue_service_times.append(Service_Time[i])
+
+    else:  # Train and queue are full
+        print(f"Passenger {i} blocked from boarding the up train.")
+
+    # Return updated variables
+    return up_busy_server_remaining_times, up_queue_service_times, up_busy_servers, up_queue_length
 
 
-for i in range(0, num):
+
+def down_train(i, down_busy_server_remaining_times, down_queue_service_times, down_busy_servers, down_queue_length):
+
+    if down_busy_servers < down_space_onPlatform:  # A train is free
+        down_busy_servers += 1
+        Wait_Time[i] = 0  # No wait
+        Platform_Departure_Time[i] = Platform_Arrival_Time[i] + Service_Time[i]
+
+        # Add service time to busy server list
+        down_busy_server_remaining_times.append(Service_Time[i])
+
+    elif down_queue_length < down_max_num_inQueue:  # Add to queue
+        down_queue_length += 1
+
+        # Calculate wait time
+        Wait_Time[i] = sum(down_busy_server_remaining_times) + sum(down_queue_service_times)
+
+        # Add the passenger's service time to the queue
+        down_queue_service_times.append(Service_Time[i])
+
+    else:  # Train and queue are full
+        print(f"Passenger {i} blocked from boarding the down train.")
+
+    # Return updated variables
+    return down_busy_server_remaining_times, down_queue_service_times, down_busy_servers, down_queue_length
+
+
+
+""" for i in range(0, num):
     # Call arrival process to instantiate Arrival Time, calculate Arrival-Process Service Time to find time at which customer arrives at Platform-Process
     Platform_Arrival_Time[i] = Arrival_Process(i)
 
@@ -115,7 +194,7 @@ for i in range(0, num):
     else:  # downtrain
         Platform_Process(i)
 
-    print()
+    print() """
 
 # Overview of next steps
 # 1.Finalize the platform model
