@@ -38,13 +38,14 @@ class Simulation:
 
         # Train-related attributes
         self.train_interval = train_interval
-        self.trains = [Train(i, i * train_interval, self.train_capacity-int((max(0, min(np.random.normal(4, 2), 100)) / 100) * self.num_customers)) for i in range(num_trains)]
         self.up_train_queue = []  # Queue for customers waiting for up-trains
         self.down_train_queue = []  # Queue for customers waiting for down-trains
         
         
         
-        self.num_leaving_customers = train_capacity-(self.train_capacity-int((max(0, min(np.random.normal(4, 2), 100)) / 100) * self.num_customers))
+        self.num_leaving_customers =int(max(0, np.random.normal(200, 20)))
+        self.trains = [Train(i, i * train_interval, int(max(0, np.random.normal(200, 20)))) for i in range(num_trains)]
+
         # List to store departing customers
         self.departing_customers = []
 
@@ -233,7 +234,7 @@ simulation = Simulation(
     interarrival_mean=30,
     interarrival_sd=5,
     train_interval=5000,
-    train_capacity=300,
+    train_capacity=200,
     num_trains=10,
 )
 simulation.run()
